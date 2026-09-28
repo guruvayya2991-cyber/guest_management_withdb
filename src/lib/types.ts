@@ -1,0 +1,85 @@
+export type GuestStatus = 'active' | 'ending_soon' | 'time_over' | 'completed' | 'cancelled';
+
+export type StaffRole = 'staff' | 'admin';
+
+export interface Guest {
+  id: string;
+  serial_number: number;
+  guest_name: string;
+  in_time: string;
+  expected_out_time: string;
+  actual_out_time: string | null;
+  duration_minutes: number;
+  status: GuestStatus;
+  remarks: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GuestWithExtensions extends Guest {
+  extensions: Extension[];
+}
+
+export interface Extension {
+  id: string;
+  guest_id: string;
+  extension_minutes: number;
+  previous_out_time: string;
+  new_out_time: string;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface StaffUser {
+  id: string;
+  name: string;
+  email: string;
+  role: StaffRole;
+  created_at: string;
+}
+
+export interface Settings {
+  id: number;
+  park_name: string;
+  timezone: string;
+  ending_soon_minutes: number;
+  notification_sound: boolean;
+  browser_notifications: boolean;
+  theme: 'light' | 'dark';
+  updated_at: string;
+}
+
+export const DEFAULT_SETTINGS: Omit<Settings, 'id' | 'updated_at'> = {
+  park_name: 'Unlimited Fun',
+  timezone: 'Asia/Kolkata',
+  ending_soon_minutes: 10,
+  notification_sound: true,
+  browser_notifications: false,
+  theme: 'light',
+};
+
+export const DURATION_PRESETS = [
+  { label: '2 Minutes', value: 2 },
+  { label: '3 Minutes', value: 3 },
+  { label: '5 Minutes', value: 5 },
+  { label: '10 Minutes', value: 10 },
+  { label: '30 Minutes', value: 30 },
+  { label: '1 Hour', value: 60 },
+];
+
+export const EXTENSION_PRESETS = [
+  { label: '+2 Minutes', value: 2 },
+  { label: '+3 Minutes', value: 3 },
+  { label: '+5 Minutes', value: 5 },
+  { label: '+10 Minutes', value: 10 },
+];
+
+export const REMARK_SUGGESTIONS = [
+  'Birthday Party',
+  'Group Booking',
+  'VIP',
+  'Extended Time',
+  'Special Requirement',
+  'Test Profile',
+];
