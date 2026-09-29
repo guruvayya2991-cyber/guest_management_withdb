@@ -302,7 +302,29 @@ export function CalendarPage({ onNavigate }: CalendarPageProps) {
                         {formatSerial(r.serial_number)}
                       </td>
                       <td className="px-3 py-3 text-sm font-bold text-slate-900">
-                        <span className="truncate max-w-[200px] block">{r.guest_name}</span>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-1.5">
+                            <span className="truncate max-w-[170px] font-bold text-slate-900">{r.guest_name}</span>
+                            {r.guest_type && (
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase shrink-0 ${
+                                r.guest_type === 'new' ? 'bg-cyan-100 text-cyan-800' : 'bg-purple-100 text-purple-800'
+                              }`}>
+                                {r.guest_type === 'new' ? 'New' : 'Exist'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500 font-medium">
+                            <span className={`px-1.5 py-0.2 rounded font-semibold ${
+                              r.play_area === 'soft_play' ? 'bg-pink-50 text-pink-700 border border-pink-200/60' : 'bg-purple-50 text-purple-700 border border-purple-200/60'
+                            }`}>
+                              {r.play_area === 'soft_play' ? 'Soft Play' : 'Trampoline'}
+                            </span>
+                            <span>•</span>
+                            <span className="bg-indigo-50 text-indigo-700 px-1.5 py-0.2 rounded font-semibold border border-indigo-200/60 uppercase">
+                              Socks: {r.socks_size ? r.socks_size.charAt(0).toUpperCase() + r.socks_size.slice(1) : 'Medium'}
+                            </span>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-3 py-3 text-sm text-slate-600 tabular-nums whitespace-nowrap">{formatTime(r.in_time)}</td>
                       <td className="px-3 py-3 text-sm text-slate-600 whitespace-nowrap">{formatDuration(r.duration_minutes)}</td>

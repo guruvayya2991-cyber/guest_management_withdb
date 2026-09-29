@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { idbSaveGuest, idbBatchSaveGuests, idbDeleteGuest, idbDeleteCompletedGuests, idbUpdateGuest, idbBatchUpdateGuests, idbClearAllGuests, idbClearTodayGuests, type GuestRecord } from '@/lib/idb';
-import type { Extension, Guest } from '@/lib/types';
+import type { Extension, Guest, PlayArea, SocksSize, GuestType } from '@/lib/types';
 import { addMinutes } from '@/lib/time';
 
 // Custom event for local component updates
@@ -35,7 +35,7 @@ export async function fetchAllGuestsFromSupabase(): Promise<GuestRecord[]> {
   try {
     const { data, error } = await supabase
       .from('guests')
-      .select('id, serial_number, guest_name, in_time, expected_out_time, actual_out_time, duration_minutes, status, remarks, created_by, created_at, updated_at, extensions(*)')
+      .select('id, serial_number, guest_name, play_area, socks_size, guest_type, in_time, expected_out_time, actual_out_time, duration_minutes, status, remarks, created_by, created_at, updated_at, extensions(*)')
       .order('serial_number', { ascending: true });
 
     if (error) {
@@ -47,6 +47,9 @@ export async function fetchAllGuestsFromSupabase(): Promise<GuestRecord[]> {
       id: row.id,
       serial_number: row.serial_number,
       guest_name: row.guest_name,
+      play_area: row.play_area || 'trampoline',
+      socks_size: row.socks_size || 'medium',
+      guest_type: row.guest_type || 'new',
       in_time: row.in_time,
       expected_out_time: row.expected_out_time,
       actual_out_time: row.actual_out_time || null,
@@ -71,6 +74,9 @@ export async function fetchAllGuestsFromSupabase(): Promise<GuestRecord[]> {
 
 export async function addGuest(input: {
   guest_name: string;
+  play_area: PlayArea;
+  socks_size: SocksSize;
+  guest_type: GuestType;
   in_time: Date;
   duration_minutes: number;
   remarks?: string | null;
@@ -83,6 +89,9 @@ export async function addGuest(input: {
   const payload = {
     serial_number: serial,
     guest_name: input.guest_name.trim(),
+    play_area: input.play_area,
+    socks_size: input.socks_size,
+    guest_type: input.guest_type,
     in_time: input.in_time.toISOString(),
     expected_out_time: expectedOut.toISOString(),
     actual_out_time: null,
@@ -94,7 +103,7 @@ export async function addGuest(input: {
   const { data, error } = await supabase
     .from('guests')
     .insert(payload)
-    .select('id, serial_number, guest_name, in_time, expected_out_time, actual_out_time, duration_minutes, status, remarks, created_by, created_at, updated_at, extensions(*)')
+    .select('id, serial_number, guest_name, play_area, socks_size, guest_type, in_time, expected_out_time, actual_out_time, duration_minutes, status, remarks, created_by, created_at, updated_at, extensions(*)')
     .single();
 
   if (error) {
@@ -106,6 +115,9 @@ export async function addGuest(input: {
     id: data.id,
     serial_number: data.serial_number,
     guest_name: data.guest_name,
+    play_area: data.play_area || input.play_area,
+    socks_size: data.socks_size || input.socks_size,
+    guest_type: data.guest_type || input.guest_type,
     in_time: data.in_time,
     expected_out_time: data.expected_out_time,
     actual_out_time: data.actual_out_time || null,
@@ -125,7 +137,15 @@ export async function addGuest(input: {
 }
 
 export async function addBulkGuests(
-  guestsData: Array<{ name: string; in_time?: Date; duration_minutes: number; remarks?: string | null }>
+  guestsData: Array<{
+    name: string;
+    play_area?: PlayArea;
+    socks_size?: SocksSize;
+    guest_type?: GuestType;
+    in_time?: Date;
+    duration_minutes: number;
+    remarks?: string | null;
+  }>
 ): Promise<GuestRecord[]> {
   if (guestsData.length === 0) return [];
   const startSerial = await fetchNextSerial();
@@ -137,6 +157,9 @@ export async function addBulkGuests(
     return {
       serial_number: startSerial + idx,
       guest_name: item.name.trim(),
+      play_area: item.play_area ?? 'trampoline',
+      socks_size: item.socks_size ?? 'medium',
+      guest_type: item.guest_type ?? 'new',
       in_time: inTime.toISOString(),
       expected_out_time: expectedOut.toISOString(),
       actual_out_time: null,
@@ -149,7 +172,7 @@ export async function addBulkGuests(
   const { data, error } = await supabase
     .from('guests')
     .insert(insertPayloads)
-    .select('id, serial_number, guest_name, in_time, expected_out_time, actual_out_time, duration_minutes, status, remarks, created_by, created_at, updated_at, extensions(*)');
+    .select('id, serial_number, guest_name, play_area, socks_size, guest_type, in_time, expected_out_time, actual_out_time, duration_minutes, status, remarks, created_by, created_at, updated_at, extensions(*)');
 
   if (error) {
     console.error('Failed to bulk insert guests into Supabase:', error);
@@ -160,6 +183,9 @@ export async function addBulkGuests(
     id: row.id,
     serial_number: row.serial_number,
     guest_name: row.guest_name,
+    play_area: row.play_area || 'trampoline',
+    socks_size: row.socks_size || 'medium',
+    guest_type: row.guest_type || 'new',
     in_time: row.in_time,
     expected_out_time: row.expected_out_time,
     actual_out_time: row.actual_out_time || null,
@@ -180,7 +206,7 @@ export async function addBulkGuests(
 
 export async function updateGuest(
   id: string,
-  patch: Partial<Pick<Guest, 'guest_name' | 'in_time' | 'expected_out_time' | 'duration_minutes' | 'remarks' | 'status'>>,
+  patch: Partial<Pick<Guest, 'guest_name' | 'play_area' | 'socks_size' | 'guest_type' | 'in_time' | 'expected_out_time' | 'duration_minutes' | 'remarks' | 'status'>>,
 ): Promise<void> {
   const updatePayload: any = { ...patch };
 

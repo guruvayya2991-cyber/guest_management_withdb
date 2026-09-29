@@ -5,7 +5,7 @@ import { useGuests, computeStatus } from '@/hooks/useGuests';
 import { useSettings } from '@/context/SettingsContext';
 import { formatLongDate, formatTimeWithSeconds, getDayKey } from '@/lib/time';
 import { playAlertSound, showBrowserNotification } from '@/lib/notify';
-import type { Guest } from '@/lib/types';
+import type { Guest, PlayArea, SocksSize, GuestType } from '@/lib/types';
 import { AddGuestModal } from '@/components/AddGuestModal';
 import { BulkAddModal } from '@/components/BulkAddModal';
 import { ExtendTimeModal } from '@/components/ExtendTimeModal';
@@ -45,6 +45,9 @@ export function HostView({ onNavigate }: HostViewProps) {
   // Dashboard state
   const [activeTab, setActiveTab] = useState<TabFilter>('all');
   const [search, setSearch] = useState('');
+  const [playAreaFilter, setPlayAreaFilter] = useState<'all' | PlayArea>('all');
+  const [guestTypeFilter, setGuestTypeFilter] = useState<'all' | GuestType>('all');
+  const [socksSizeFilter, setSocksSizeFilter] = useState<'all' | SocksSize>('all');
   const [addOpen, setAddOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [markAllOverdueOpen, setMarkAllOverdueOpen] = useState(false);
@@ -117,7 +120,7 @@ export function HostView({ onNavigate }: HostViewProps) {
     return { active, timeOver, completed, total };
   }, [liveGuests, now]);
 
-  // Filtered list based on activeTab and search
+  // Filtered list based on activeTab, search, playAreaFilter, guestTypeFilter, socksSizeFilter
   // STRICT NUMERICAL ASCENDING ORDER BY SERIAL NUMBER (001 -> 002 -> 003...)
   const filtered = useMemo(() => {
     const todayKey = getDayKey(now);
@@ -131,13 +134,23 @@ export function HostView({ onNavigate }: HostViewProps) {
       list = list.filter((i) => i.status === 'completed');
     }
 
+    if (playAreaFilter !== 'all') {
+      list = list.filter(({ guest }) => guest.play_area === playAreaFilter);
+    }
+    if (guestTypeFilter !== 'all') {
+      list = list.filter(({ guest }) => guest.guest_type === guestTypeFilter);
+    }
+    if (socksSizeFilter !== 'all') {
+      list = list.filter(({ guest }) => guest.socks_size === socksSizeFilter);
+    }
+
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(({ guest }) => guest.guest_name.toLowerCase().includes(q));
     }
 
     return list.sort((a, b) => a.guest.serial_number - b.guest.serial_number);
-  }, [liveGuests, now, activeTab, search]);
+  }, [liveGuests, now, activeTab, playAreaFilter, guestTypeFilter, socksSizeFilter, search]);
 
   // Direct Admin/Host Console Dashboard
   return (
@@ -301,16 +314,51 @@ export function HostView({ onNavigate }: HostViewProps) {
           </div>
         )}
 
-        {/* Search Bar */}
-        <div className="relative mb-5">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search host guest records by name..."
-            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all text-slate-900 placeholder:text-slate-400 text-sm font-medium"
-          />
+        {/* Search & Filter Bar */}
+        <div className="flex flex-col md:flex-row gap-2.5 mb-5">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search host guest records by name..."
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all text-slate-900 placeholder:text-slate-400 text-sm font-medium"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <select
+              value={playAreaFilter}
+              onChange={(e) => setPlayAreaFilter(e.target.value as 'all' | PlayArea)}
+              className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 text-slate-900 font-bold text-xs outline-none"
+            >
+              <option value="all">Play Area: All</option>
+              <option value="trampoline">Trampoline Park</option>
+              <option value="soft_play">Soft Play</option>
+            </select>
+
+            <select
+              value={guestTypeFilter}
+              onChange={(e) => setGuestTypeFilter(e.target.value as 'all' | GuestType)}
+              className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 text-slate-900 font-bold text-xs outline-none"
+            >
+              <option value="all">Guest Type: All</option>
+              <option value="new">New Guest</option>
+              <option value="existing">Existing Guest</option>
+            </select>
+
+            <select
+              value={socksSizeFilter}
+              onChange={(e) => setSocksSizeFilter(e.target.value as 'all' | SocksSize)}
+              className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 text-slate-900 font-bold text-xs outline-none"
+            >
+              <option value="all">Socks: All</option>
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
         </div>
 
         {/* Guest List Content */}

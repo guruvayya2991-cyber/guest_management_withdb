@@ -1,4 +1,7 @@
 export type GuestStatus = 'active' | 'ending_soon' | 'time_over' | 'completed' | 'cancelled';
+export type PlayArea = 'trampoline' | 'soft_play';
+export type SocksSize = 'small' | 'medium' | 'large';
+export type GuestType = 'new' | 'existing';
 
 export type StaffRole = 'staff' | 'admin';
 
@@ -6,6 +9,9 @@ export interface Guest {
   id: string;
   serial_number: number;
   guest_name: string;
+  play_area?: PlayArea;
+  socks_size?: SocksSize;
+  guest_type?: GuestType;
   in_time: string;
   expected_out_time: string;
   actual_out_time: string | null;
@@ -82,4 +88,20 @@ export const REMARK_SUGGESTIONS = [
   'Extended Time',
   'Special Requirement',
   'Test Profile',
+];
+
+export const PLAY_AREA_OPTIONS: Array<{ label: string; value: PlayArea }> = [
+  { label: 'Trampoline Park', value: 'trampoline' },
+  { label: 'Soft Play', value: 'soft_play' },
+];
+
+export const SOCKS_SIZE_OPTIONS: Array<{ label: string; value: SocksSize }> = [
+  { label: 'Small', value: 'small' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Large', value: 'large' },
+];
+
+export const GUEST_TYPE_OPTIONS: Array<{ label: string; value: GuestType }> = [
+  { label: 'New Guest', value: 'new' },
+  { label: 'Existing Guest', value: 'existing' },
 ];

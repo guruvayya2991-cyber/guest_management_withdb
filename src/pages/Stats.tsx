@@ -37,6 +37,7 @@ export function Stats({ onNavigate }: StatsProps) {
 
   const stats = useMemo(() => {
     let active = 0, completed = 0, timeOver = 0, totalMin = 0, extCount = 0;
+    let trampoline = 0, softPlay = 0, newGuest = 0, existingGuest = 0;
     for (const r of rows) {
       const s = r.status as GuestStatus;
       if (s === 'active' || s === 'ending_soon') active++;
@@ -44,20 +45,28 @@ export function Stats({ onNavigate }: StatsProps) {
       else if (s === 'time_over') timeOver++;
       totalMin += r.duration_minutes;
       extCount += r.extensions?.length ?? 0;
+
+      if (r.play_area === 'soft_play') softPlay++;
+      else trampoline++;
+
+      if (r.guest_type === 'existing') existingGuest++;
+      else newGuest++;
     }
     const totalGuests = rows.length;
     const avgMin = totalGuests > 0 ? Math.round(totalMin / totalGuests) : 0;
-    return { totalGuests, active, completed, timeOver, totalMin, avgMin, extCount };
+    return { totalGuests, active, completed, timeOver, totalMin, avgMin, extCount, trampoline, softPlay, newGuest, existingGuest };
   }, [rows]);
 
   const cards = [
     { label: 'Total Guests', value: stats.totalGuests, icon: Users, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+    { label: 'Trampoline Park', value: stats.trampoline, icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Soft Play', value: stats.softPlay, icon: TrendingUp, color: 'text-pink-600', bg: 'bg-pink-50' },
+    { label: 'New Guests', value: stats.newGuest, icon: Users, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+    { label: 'Existing Guests', value: stats.existingGuest, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50' },
     { label: 'Active', value: stats.active, icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'text-slate-500', bg: 'bg-slate-50' },
     { label: 'Time Over', value: stats.timeOver, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50' },
     { label: 'Total Play Hours', value: (stats.totalMin / 60).toFixed(1), icon: Clock, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { label: 'Avg Duration', value: formatDuration(stats.avgMin), icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Extensions', value: stats.extCount, icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
   ];
 
   // Bar chart: guests by status

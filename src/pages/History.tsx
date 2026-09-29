@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Page } from '@/App';
 import { idbGetAllGuests, idbDeleteGuest } from '@/lib/idb';
-import type { Extension, Guest, GuestStatus } from '@/lib/types';
+import type { Extension, Guest, GuestStatus, PlayArea, SocksSize, GuestType } from '@/lib/types';
 import { getDayKey, formatDuration, formatTime, formatShortDate, formatSerial, toLocalInputValue } from '@/lib/time';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Modal } from '@/components/Modal';
@@ -22,6 +22,9 @@ export function History({ onNavigate }: HistoryProps) {
   const [viewAllDates, setViewAllDates] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<GuestStatus | 'all'>('all');
+  const [playAreaFilter, setPlayAreaFilter] = useState<'all' | PlayArea>('all');
+  const [guestTypeFilter, setGuestTypeFilter] = useState<'all' | GuestType>('all');
+  const [socksSizeFilter, setSocksSizeFilter] = useState<'all' | SocksSize>('all');
   const [allRows, setAllRows] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +51,7 @@ export function History({ onNavigate }: HistoryProps) {
     loadAllHistory();
   }, []);
 
-  // Filter rows by date (or all), status, and search
+  // Filter rows by date (or all), status, search, and new criteria
   const rows = useMemo(() => {
     if (viewAllDates) return allRows;
     return allRows.filter((g) => getDayKey(g.created_at) === date);
@@ -60,12 +63,21 @@ export function History({ onNavigate }: HistoryProps) {
     if (statusFilter !== 'all') {
       list = list.filter((r) => r.status === statusFilter);
     }
+    if (playAreaFilter !== 'all') {
+      list = list.filter((r) => r.play_area === playAreaFilter);
+    }
+    if (guestTypeFilter !== 'all') {
+      list = list.filter((r) => r.guest_type === guestTypeFilter);
+    }
+    if (socksSizeFilter !== 'all') {
+      list = list.filter((r) => r.socks_size === socksSizeFilter);
+    }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter((r) => r.guest_name.toLowerCase().includes(q));
     }
     return [...list].sort((a, b) => a.serial_number - b.serial_number);
-  }, [rows, statusFilter, search]);
+  }, [rows, statusFilter, playAreaFilter, guestTypeFilter, socksSizeFilter, search]);
 
   const stats = useMemo(() => {
     let totalMin = 0;
@@ -94,12 +106,15 @@ export function History({ onNavigate }: HistoryProps) {
   }
 
   function exportCSV() {
-    const headers = ['S.No', 'Guest Name', 'In Time', 'Expected Out', 'Actual Out', 'Duration', 'Extensions', 'Status', 'Remarks'];
+    const headers = ['S.No', 'Guest Name', 'Guest Type', 'Play Area', 'Socks Size', 'In Time', 'Expected Out', 'Actual Out', 'Duration', 'Extensions', 'Status', 'Remarks'];
     const lines = filtered.map((r) => {
       const exts = (r.extensions ?? []).map((e) => `+${e.extension_minutes}m`).join('; ');
       const row = [
         r.serial_number,
         `"${r.guest_name.replace(/"/g, '""')}"`,
+        r.guest_type === 'existing' ? 'Existing Guest' : 'New Guest',
+        r.play_area === 'soft_play' ? 'Soft Play' : 'Trampoline Park',
+        r.socks_size || 'medium',
         formatTime(r.in_time),
         formatTime(r.expected_out_time),
         r.actual_out_time ? formatTime(r.actual_out_time) : '—',
@@ -163,45 +178,82 @@ export function History({ onNavigate }: HistoryProps) {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-6">
-        {/* Controls */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          {!viewAllDates && (
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="px-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all text-slate-900 font-medium text-sm"
-            />
-          )}
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search history by guest name..."
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all text-slate-900 placeholder:text-slate-400 text-sm font-medium"
-            />
+        {/* Controls Bar */}
+        <div className="flex flex-col gap-3 mb-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            {!viewAllDates && (
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="px-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all text-slate-900 font-medium text-sm"
+              />
+            )}
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search history by guest name..."
+                className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all text-slate-900 placeholder:text-slate-400 text-sm font-medium"
+              />
+            </div>
+            <button
+              onClick={exportCSV}
+              disabled={filtered.length === 0}
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-all disabled:opacity-50 shrink-0 shadow-sm cursor-pointer"
+            >
+              <Download className="w-4 h-4" /> Export CSV
+            </button>
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as GuestStatus | 'all')}
-            className="px-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all text-slate-900 font-bold text-sm"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="ending_soon">Ending Soon</option>
-            <option value="time_over">Time Over</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-          <button
-            onClick={exportCSV}
-            disabled={filtered.length === 0}
-            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-all disabled:opacity-50 shrink-0 shadow-sm cursor-pointer"
-          >
-            <Download className="w-4 h-4" /> Export CSV
-          </button>
+
+          {/* Additional Filter Selects */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as GuestStatus | 'all')}
+              className="px-3 py-2 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 outline-none text-slate-900 font-bold text-xs"
+            >
+              <option value="all">Status: All</option>
+              <option value="active">Active</option>
+              <option value="ending_soon">Ending Soon</option>
+              <option value="time_over">Time Over</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+
+            <select
+              value={playAreaFilter}
+              onChange={(e) => setPlayAreaFilter(e.target.value as 'all' | PlayArea)}
+              className="px-3 py-2 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 outline-none text-slate-900 font-bold text-xs"
+            >
+              <option value="all">Play Area: All</option>
+              <option value="trampoline">Trampoline Park</option>
+              <option value="soft_play">Soft Play</option>
+            </select>
+
+            <select
+              value={guestTypeFilter}
+              onChange={(e) => setGuestTypeFilter(e.target.value as 'all' | GuestType)}
+              className="px-3 py-2 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 outline-none text-slate-900 font-bold text-xs"
+            >
+              <option value="all">Guest Type: All</option>
+              <option value="new">New Guest</option>
+              <option value="existing">Existing Guest</option>
+            </select>
+
+            <select
+              value={socksSizeFilter}
+              onChange={(e) => setSocksSizeFilter(e.target.value as 'all' | SocksSize)}
+              className="px-3 py-2 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 outline-none text-slate-900 font-bold text-xs"
+            >
+              <option value="all">Socks Size: All</option>
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
         </div>
 
         {/* Stats Summary */}
@@ -331,6 +383,18 @@ export function History({ onNavigate }: HistoryProps) {
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="p-3 rounded-xl bg-slate-50">
+                <p className="text-xs text-slate-400 font-semibold uppercase">Play Area</p>
+                <p className="text-slate-800 font-bold">{selectedGuest.play_area === 'soft_play' ? 'Soft Play' : 'Trampoline Park'}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50">
+                <p className="text-xs text-slate-400 font-semibold uppercase">Socks Size</p>
+                <p className="text-slate-800 font-bold capitalize">{selectedGuest.socks_size || 'Medium'}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50">
+                <p className="text-xs text-slate-400 font-semibold uppercase">Guest Type</p>
+                <p className="text-slate-800 font-bold">{selectedGuest.guest_type === 'existing' ? 'Existing Guest' : 'New Guest'}</p>
+              </div>
               <div className="p-3 rounded-xl bg-slate-50">
                 <p className="text-xs text-slate-400 font-semibold uppercase">In Time</p>
                 <p className="text-slate-800 font-bold tabular-nums">{formatTime(selectedGuest.in_time)}</p>

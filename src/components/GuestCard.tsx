@@ -30,15 +30,32 @@ export function GuestCard({ guest, status, remainingMs, extensionCount, onExtend
     <div className={`rounded-2xl border-2 ${cardTint} p-4 shadow-sm transition-colors`}>
       <div className="flex items-start justify-between mb-3">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-extrabold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
               #{formatSerial(guest.serial_number)}
             </span>
             <h3 className="text-base font-bold text-slate-900">{guest.guest_name}</h3>
+            {guest.guest_type && (
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                guest.guest_type === 'new' ? 'bg-cyan-100 text-cyan-800' : 'bg-purple-100 text-purple-800'
+              }`}>
+                {guest.guest_type === 'new' ? 'New Guest' : 'Existing'}
+              </span>
+            )}
           </div>
-          {extensionCount > 0 && (
-            <span className="text-xs text-cyan-600 font-semibold mt-0.5 inline-block">+{extensionCount} extension{extensionCount > 1 ? 's' : ''}</span>
-          )}
+          <div className="flex items-center gap-1.5 mt-1 text-xs">
+            <span className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${
+              guest.play_area === 'soft_play' ? 'bg-pink-100 text-pink-800' : 'bg-purple-100 text-purple-800'
+            }`}>
+              {guest.play_area === 'soft_play' ? 'Soft Play' : 'Trampoline Park'}
+            </span>
+            <span className="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-md font-semibold text-[11px]">
+              Socks: {guest.socks_size ? guest.socks_size.charAt(0).toUpperCase() + guest.socks_size.slice(1) : 'Medium'}
+            </span>
+            {extensionCount > 0 && (
+              <span className="text-xs text-cyan-600 font-semibold inline-block">+{extensionCount} ext</span>
+            )}
+          </div>
         </div>
         <StatusBadge status={status} />
       </div>
