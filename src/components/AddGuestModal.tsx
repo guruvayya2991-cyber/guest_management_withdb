@@ -6,14 +6,18 @@ import {
   PLAY_AREA_OPTIONS,
   SOCKS_SIZE_OPTIONS,
   GUEST_TYPE_OPTIONS,
+  CARD_TYPE_OPTIONS,
   type PlayArea,
   type SocksSize,
   type GuestType,
+  type CardType,
 } from '@/lib/types';
 import { addMinutes, formatTime, parseTimeOnDate, toLocalInputValue } from '@/lib/time';
 import { addGuest } from '@/lib/guestOps';
 import { showToast } from '@/components/Toast';
-import { Plus, User, MapPin, Footprints, UserCheck } from 'lucide-react';
+import { Plus, User, MapPin, Footprints, UserCheck, CreditCard } from 'lucide-react';
+
+import { SuccessModal } from '@/components/SuccessModal';
 
 interface AddGuestModalProps {
   open: boolean;
@@ -26,6 +30,7 @@ export function AddGuestModal({ open, onClose, onAdded }: AddGuestModalProps) {
   const [guestType, setGuestType] = useState<GuestType>('new');
   const [playArea, setPlayArea] = useState<PlayArea>('trampoline');
   const [socksSize, setSocksSize] = useState<SocksSize>('medium');
+  const [cardType, setCardType] = useState<CardType>('basic');
   const [inTime, setInTime] = useState(() => toLocalInputValue(new Date()));
   const [duration, setDuration] = useState<number>(30);
   const [customDuration, setCustomDuration] = useState('');
@@ -33,6 +38,7 @@ export function AddGuestModal({ open, onClose, onAdded }: AddGuestModalProps) {
   const [remarks, setRemarks] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Reset form each time it opens
   useEffect(() => {
@@ -41,6 +47,7 @@ export function AddGuestModal({ open, onClose, onAdded }: AddGuestModalProps) {
       setGuestType('new');
       setPlayArea('trampoline');
       setSocksSize('medium');
+      setCardType('basic');
       setInTime(toLocalInputValue(new Date()));
       setDuration(30);
       setCustomDuration('');
@@ -83,6 +90,10 @@ export function AddGuestModal({ open, onClose, onAdded }: AddGuestModalProps) {
       setError('Please select socks size.');
       return;
     }
+    if (!cardType) {
+      setError('Please select card type.');
+      return;
+    }
     if (!inTime) {
       setError('Please enter in time.');
       return;
@@ -99,6 +110,7 @@ export function AddGuestModal({ open, onClose, onAdded }: AddGuestModalProps) {
         guest_type: guestType,
         play_area: playArea,
         socks_size: socksSize,
+        card_type: cardType,
         in_time: inTimeDate,
         duration_minutes: effectiveDuration,
         remarks: remarks.trim() || null,
@@ -106,7 +118,7 @@ export function AddGuestModal({ open, onClose, onAdded }: AddGuestModalProps) {
 
       showToast('Guest Added Successfully', 'success');
       onAdded();
-      onClose();
+      setShowSuccess(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unable to save guest to central database.';
       setError(msg);
@@ -114,6 +126,20 @@ export function AddGuestModal({ open, onClose, onAdded }: AddGuestModalProps) {
     } finally {
       setSaving(false);
     }
+  }
+
+  if (showSuccess) {
+    return (
+      <SuccessModal
+        open={showSuccess}
+        onClose={() => {
+          setShowSuccess(false);
+          onClose();
+        }}
+        title="✓ Guest Added Successfully"
+        subtitle={`${guestName} registered and timer started`}
+      />
+    );
   }
 
   return (
@@ -212,7 +238,31 @@ export function AddGuestModal({ open, onClose, onAdded }: AddGuestModalProps) {
           </div>
         </div>
 
-        {/* 5. In Time */}
+        {/* 5. Card Type */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+            <CreditCard className="w-4 h-4 text-amber-600" />
+            Card Type <span className="text-red-500">*</span>
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {CARD_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setCardType(opt.value)}
+                className={`py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                  cardType === opt.value
+                    ? 'bg-amber-600 border-amber-600 text-white shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 6. In Time */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1.5">
             In Time <span className="text-red-500">*</span>
@@ -225,7 +275,7 @@ export function AddGuestModal({ open, onClose, onAdded }: AddGuestModalProps) {
           />
         </div>
 
-        {/* 6. Play Duration */}
+        {/* 7. Play Duration */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1.5">
             Play Duration <span className="text-red-500">*</span>
@@ -275,7 +325,7 @@ export function AddGuestModal({ open, onClose, onAdded }: AddGuestModalProps) {
           )}
         </div>
 
-        {/* 7. Expected Out Time (auto) */}
+        {/* 8. Expected Out Time (auto) */}
         <div className="px-4 py-3 rounded-xl bg-cyan-50 border border-cyan-100">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-cyan-900">Expected Out Time</span>
@@ -284,7 +334,7 @@ export function AddGuestModal({ open, onClose, onAdded }: AddGuestModalProps) {
           <p className="text-xs text-cyan-600 mt-0.5">Auto-calculated from In Time + Duration</p>
         </div>
 
-        {/* 8. Remarks */}
+        {/* 9. Remarks */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1.5">
             Remarks <span className="text-slate-400 font-normal">(optional)</span>
@@ -305,7 +355,7 @@ export function AddGuestModal({ open, onClose, onAdded }: AddGuestModalProps) {
         </div>
 
         {error && (
-          <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
+          <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium animate-shake">
             {error}
           </div>
         )}

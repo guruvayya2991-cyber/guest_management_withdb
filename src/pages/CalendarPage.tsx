@@ -313,7 +313,7 @@ export function CalendarPage({ onNavigate }: CalendarPageProps) {
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500 font-medium">
+                          <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500 font-medium flex-wrap">
                             <span className={`px-1.5 py-0.2 rounded font-semibold ${
                               r.play_area === 'soft_play' ? 'bg-pink-50 text-pink-700 border border-pink-200/60' : 'bg-purple-50 text-purple-700 border border-purple-200/60'
                             }`}>
@@ -322,6 +322,12 @@ export function CalendarPage({ onNavigate }: CalendarPageProps) {
                             <span>•</span>
                             <span className="bg-indigo-50 text-indigo-700 px-1.5 py-0.2 rounded font-semibold border border-indigo-200/60 uppercase">
                               Socks: {r.socks_size ? r.socks_size.charAt(0).toUpperCase() + r.socks_size.slice(1) : 'Medium'}
+                            </span>
+                            <span>•</span>
+                            <span className={`px-1.5 py-0.2 rounded font-semibold border ${
+                              r.card_type === 'premium' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-700 border-slate-200'
+                            }`}>
+                              {r.card_type === 'premium' ? 'Premium Card' : 'Basic Card'}
                             </span>
                           </div>
                         </div>

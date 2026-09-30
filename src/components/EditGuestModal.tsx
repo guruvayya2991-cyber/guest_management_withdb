@@ -5,15 +5,17 @@ import {
   PLAY_AREA_OPTIONS,
   SOCKS_SIZE_OPTIONS,
   GUEST_TYPE_OPTIONS,
+  CARD_TYPE_OPTIONS,
   type Guest,
   type PlayArea,
   type SocksSize,
   type GuestType,
+  type CardType,
 } from '@/lib/types';
 import { addMinutes, formatTime, parseTimeOnDate, toLocalInputValue } from '@/lib/time';
 import { updateGuest } from '@/lib/guestOps';
 import { showToast } from '@/components/Toast';
-import { Save, User, MapPin, Footprints, UserCheck } from 'lucide-react';
+import { Save, User, MapPin, Footprints, UserCheck, CreditCard } from 'lucide-react';
 
 interface EditGuestModalProps {
   open: boolean;
@@ -27,6 +29,7 @@ export function EditGuestModal({ open, onClose, guest, onDone }: EditGuestModalP
   const [guestType, setGuestType] = useState<GuestType>('new');
   const [playArea, setPlayArea] = useState<PlayArea>('trampoline');
   const [socksSize, setSocksSize] = useState<SocksSize>('medium');
+  const [cardType, setCardType] = useState<CardType>('basic');
   const [inTime, setInTime] = useState('');
   const [duration, setDuration] = useState(60);
   const [customDuration, setCustomDuration] = useState('');
@@ -41,6 +44,7 @@ export function EditGuestModal({ open, onClose, guest, onDone }: EditGuestModalP
       setGuestType(guest.guest_type || 'new');
       setPlayArea(guest.play_area || 'trampoline');
       setSocksSize(guest.socks_size || 'medium');
+      setCardType(guest.card_type || 'basic');
       setInTime(toLocalInputValue(guest.in_time));
       const preset = DURATION_PRESETS.find((d) => d.value === guest.duration_minutes);
       if (preset) {
@@ -78,6 +82,7 @@ export function EditGuestModal({ open, onClose, guest, onDone }: EditGuestModalP
         guest_type: guestType,
         play_area: playArea,
         socks_size: socksSize,
+        card_type: cardType,
         in_time: inDate.toISOString(),
         duration_minutes: effDuration,
         expected_out_time: expectedOut.toISOString(),
@@ -174,6 +179,30 @@ export function EditGuestModal({ open, onClose, guest, onDone }: EditGuestModalP
                 className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                   socksSize === opt.value
                     ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Card Type */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+            <CreditCard className="w-4 h-4 text-amber-600" />
+            Card Type
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {CARD_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setCardType(opt.value)}
+                className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                  cardType === opt.value
+                    ? 'bg-amber-600 border-amber-600 text-white shadow-sm'
                     : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
                 }`}
               >

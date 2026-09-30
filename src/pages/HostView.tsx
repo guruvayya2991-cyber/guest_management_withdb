@@ -5,7 +5,7 @@ import { useGuests, computeStatus } from '@/hooks/useGuests';
 import { useSettings } from '@/context/SettingsContext';
 import { formatLongDate, formatTimeWithSeconds, getDayKey } from '@/lib/time';
 import { playAlertSound, showBrowserNotification } from '@/lib/notify';
-import type { Guest, PlayArea, SocksSize, GuestType } from '@/lib/types';
+import type { Guest, PlayArea, SocksSize, GuestType, CardType } from '@/lib/types';
 import { AddGuestModal } from '@/components/AddGuestModal';
 import { BulkAddModal } from '@/components/BulkAddModal';
 import { ExtendTimeModal } from '@/components/ExtendTimeModal';
@@ -48,6 +48,7 @@ export function HostView({ onNavigate }: HostViewProps) {
   const [playAreaFilter, setPlayAreaFilter] = useState<'all' | PlayArea>('all');
   const [guestTypeFilter, setGuestTypeFilter] = useState<'all' | GuestType>('all');
   const [socksSizeFilter, setSocksSizeFilter] = useState<'all' | SocksSize>('all');
+  const [cardTypeFilter, setCardTypeFilter] = useState<'all' | CardType>('all');
   const [addOpen, setAddOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [markAllOverdueOpen, setMarkAllOverdueOpen] = useState(false);
@@ -143,6 +144,9 @@ export function HostView({ onNavigate }: HostViewProps) {
     if (socksSizeFilter !== 'all') {
       list = list.filter(({ guest }) => guest.socks_size === socksSizeFilter);
     }
+    if (cardTypeFilter !== 'all') {
+      list = list.filter(({ guest }) => guest.card_type === cardTypeFilter);
+    }
 
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -150,7 +154,7 @@ export function HostView({ onNavigate }: HostViewProps) {
     }
 
     return list.sort((a, b) => a.guest.serial_number - b.guest.serial_number);
-  }, [liveGuests, now, activeTab, playAreaFilter, guestTypeFilter, socksSizeFilter, search]);
+  }, [liveGuests, now, activeTab, playAreaFilter, guestTypeFilter, socksSizeFilter, cardTypeFilter, search]);
 
   // Direct Admin/Host Console Dashboard
   return (
@@ -169,13 +173,15 @@ export function HostView({ onNavigate }: HostViewProps) {
                   <ArrowLeft className="w-4 h-4" />
                 </button>
               )}
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shrink-0 shadow-md shadow-indigo-500/20">
-                <Users className="w-5 h-5 text-white" strokeWidth={2.5} />
-              </div>
+              <img
+                src="/logo.jpg"
+                alt="unlimited_fun_is_here logo"
+                className="w-10 h-10 rounded-xl object-cover shadow-md shrink-0"
+              />
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-none">
-                    UNLIMITED FUN
+                    unlimited_fun_is_here
                   </h1>
                   <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-[10px] tracking-widest uppercase">
                     HOST CONSOLE
@@ -327,7 +333,7 @@ export function HostView({ onNavigate }: HostViewProps) {
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <select
               value={playAreaFilter}
               onChange={(e) => setPlayAreaFilter(e.target.value as 'all' | PlayArea)}
@@ -357,6 +363,16 @@ export function HostView({ onNavigate }: HostViewProps) {
               <option value="small">Small</option>
               <option value="medium">Medium</option>
               <option value="large">Large</option>
+            </select>
+
+            <select
+              value={cardTypeFilter}
+              onChange={(e) => setCardTypeFilter(e.target.value as 'all' | CardType)}
+              className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 text-slate-900 font-bold text-xs outline-none"
+            >
+              <option value="all">Card: All</option>
+              <option value="basic">Basic Card</option>
+              <option value="premium">Premium Card</option>
             </select>
           </div>
         </div>

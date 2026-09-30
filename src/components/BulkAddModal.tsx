@@ -1,8 +1,19 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Modal } from '@/components/Modal';
+import {
+  GUEST_TYPE_OPTIONS,
+  PLAY_AREA_OPTIONS,
+  SOCKS_SIZE_OPTIONS,
+  CARD_TYPE_OPTIONS,
+  type GuestType,
+  type PlayArea,
+  type SocksSize,
+  type CardType,
+} from '@/lib/types';
 import { addBulkGuests } from '@/lib/guestOps';
 import { showToast } from '@/components/Toast';
-import { Sparkles, Users } from 'lucide-react';
+import { Sparkles, Users, UserCheck, MapPin, Footprints, CreditCard } from 'lucide-react';
+import { SuccessModal } from '@/components/SuccessModal';
 
 interface BulkAddModalProps {
   open: boolean;
@@ -23,22 +34,34 @@ export function BulkAddModal({ open, onClose, onAdded }: BulkAddModalProps) {
   const [customCount, setCustomCount] = useState('');
   const [useCustomCount, setUseCustomCount] = useState(false);
 
+  const [guestType, setGuestType] = useState<GuestType>('new');
+  const [playArea, setPlayArea] = useState<PlayArea>('trampoline');
+  const [socksSize, setSocksSize] = useState<SocksSize>('medium');
+  const [cardType, setCardType] = useState<CardType>('basic');
+
   const [namesText, setNamesText] = useState('');
   const [duration, setDuration] = useState<number>(60);
   const [customDuration, setCustomDuration] = useState('');
   const [useCustomDuration, setUseCustomDuration] = useState(false);
+  const [remarks, setRemarks] = useState('Bulk Entry');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [addedCount, setAddedCount] = useState(0);
 
   useEffect(() => {
     if (open) {
       setGuestCount(10);
       setCustomCount('');
       setUseCustomCount(false);
+      setGuestType('new');
+      setPlayArea('trampoline');
+      setSocksSize('medium');
+      setCardType('basic');
       setNamesText('');
       setDuration(60);
       setCustomDuration('');
       setUseCustomDuration(false);
+      setRemarks('Bulk Entry');
       setError(null);
       setSaving(false);
     }
@@ -98,15 +121,19 @@ export function BulkAddModal({ open, onClose, onAdded }: BulkAddModalProps) {
       const now = new Date();
       const payload = finalNames.map((name) => ({
         name,
+        guest_type: guestType,
+        play_area: playArea,
+        socks_size: socksSize,
+        card_type: cardType,
         in_time: now,
         duration_minutes: effectiveDuration,
-        remarks: 'Bulk Entry',
+        remarks: remarks.trim() || 'Bulk Entry',
       }));
 
       await addBulkGuests(payload);
       showToast(`Added ${finalNames.length} guests to central database`, 'success');
       onAdded();
-      onClose();
+      setAddedCount(finalNames.length);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error adding bulk guests.';
       setError(msg);
@@ -116,11 +143,26 @@ export function BulkAddModal({ open, onClose, onAdded }: BulkAddModalProps) {
     }
   }
 
+  if (addedCount > 0) {
+    return (
+      <SuccessModal
+        open={addedCount > 0}
+        onClose={() => {
+          setAddedCount(0);
+          onClose();
+        }}
+        title="✓ Guests Added Successfully"
+        subtitle={`${addedCount} guest profiles initialized & timing active`}
+        count={addedCount}
+      />
+    );
+  }
+
   const finalGuestCount = parsedNames.length > 0 ? parsedNames.length : effectiveCount;
 
   return (
     <Modal open={open} onClose={onClose} title="Bulk Add Guests" maxWidth="max-w-xl">
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Count Selection */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1.5">Number of Guests</label>
@@ -133,7 +175,7 @@ export function BulkAddModal({ open, onClose, onAdded }: BulkAddModalProps) {
                   setGuestCount(cnt);
                   setUseCustomCount(false);
                 }}
-                className={`py-2 rounded-xl text-sm font-bold border transition-all ${
+                className={`py-2 rounded-xl text-sm font-bold border transition-all cursor-pointer ${
                   !useCustomCount && guestCount === cnt
                     ? 'bg-slate-900 border-slate-900 text-white shadow-sm'
                     : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
@@ -145,7 +187,7 @@ export function BulkAddModal({ open, onClose, onAdded }: BulkAddModalProps) {
             <button
               type="button"
               onClick={() => setUseCustomCount(true)}
-              className={`py-2 rounded-xl text-sm font-bold border transition-all ${
+              className={`py-2 rounded-xl text-sm font-bold border transition-all cursor-pointer ${
                 useCustomCount
                   ? 'bg-slate-900 border-slate-900 text-white shadow-sm'
                   : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
@@ -170,6 +212,102 @@ export function BulkAddModal({ open, onClose, onAdded }: BulkAddModalProps) {
           )}
         </div>
 
+        {/* 1. Guest Type */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+            <UserCheck className="w-4 h-4 text-cyan-600" />
+            Guest Type for all guests <span className="text-red-500">*</span>
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {GUEST_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setGuestType(opt.value)}
+                className={`py-2 px-3 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                  guestType === opt.value
+                    ? 'bg-cyan-600 border-cyan-600 text-white shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 2. Play Area */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+            <MapPin className="w-4 h-4 text-cyan-600" />
+            Play Area for all guests <span className="text-red-500">*</span>
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {PLAY_AREA_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setPlayArea(opt.value)}
+                className={`py-2 px-3 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                  playArea === opt.value
+                    ? 'bg-purple-600 border-purple-600 text-white shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 3. Socks Size */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+            <Footprints className="w-4 h-4 text-cyan-600" />
+            Socks Size for all guests <span className="text-red-500">*</span>
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {SOCKS_SIZE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setSocksSize(opt.value)}
+                className={`py-2 px-3 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                  socksSize === opt.value
+                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 4. Card Type */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+            <CreditCard className="w-4 h-4 text-amber-600" />
+            Card Type for all guests <span className="text-red-500">*</span>
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {CARD_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setCardType(opt.value)}
+                className={`py-2 px-3 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                  cardType === opt.value
+                    ? 'bg-amber-600 border-amber-600 text-white shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Duration Selection */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1.5">
@@ -184,7 +322,7 @@ export function BulkAddModal({ open, onClose, onAdded }: BulkAddModalProps) {
                   setDuration(d.value);
                   setUseCustomDuration(false);
                 }}
-                className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                   !useCustomDuration && duration === d.value
                     ? 'bg-cyan-500 border-cyan-500 text-white shadow-sm'
                     : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
@@ -196,7 +334,7 @@ export function BulkAddModal({ open, onClose, onAdded }: BulkAddModalProps) {
             <button
               type="button"
               onClick={() => setUseCustomDuration(true)}
-              className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+              className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                 useCustomDuration
                   ? 'bg-cyan-500 border-cyan-500 text-white shadow-sm'
                   : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
@@ -229,13 +367,13 @@ export function BulkAddModal({ open, onClose, onAdded }: BulkAddModalProps) {
             <button
               type="button"
               onClick={handleAutoFill}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-600 hover:text-cyan-700 hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-600 hover:text-cyan-700 hover:underline cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" /> Auto-fill {effectiveCount} names
             </button>
           </div>
           <textarea
-            rows={5}
+            rows={4}
             value={namesText}
             onChange={(e) => setNamesText(e.target.value)}
             placeholder={`Rahul\nSuresh\nPriya\nAnil\n...(or leave blank to auto-create ${effectiveCount} guests)`}
@@ -246,8 +384,22 @@ export function BulkAddModal({ open, onClose, onAdded }: BulkAddModalProps) {
           </p>
         </div>
 
+        {/* Remarks */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+            Remarks <span className="text-slate-400 font-normal">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            placeholder="Bulk Entry"
+            className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-cyan-500 outline-none text-slate-900 text-sm font-medium"
+          />
+        </div>
+
         {error && (
-          <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
+          <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium animate-shake">
             {error}
           </div>
         )}
@@ -255,7 +407,7 @@ export function BulkAddModal({ open, onClose, onAdded }: BulkAddModalProps) {
         <button
           type="submit"
           disabled={saving}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-extrabold text-sm shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-extrabold text-sm shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
         >
           <Users className="w-5 h-5" /> {saving ? 'Adding Guests...' : `ADD ${finalGuestCount} GUESTS`}
         </button>

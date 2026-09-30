@@ -38,7 +38,7 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
       }
     }
     const { error } = await updateSettings({
-      park_name: parkName.trim() || 'Unlimited Fun',
+      park_name: parkName.trim() || 'unlimited_fun_is_here',
       ending_soon_minutes: endingSoon,
       notification_sound: sound,
       browser_notifications: notif,

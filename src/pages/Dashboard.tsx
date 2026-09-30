@@ -5,7 +5,7 @@ import { useGuests, computeStatus } from '@/hooks/useGuests';
 import { useSettings } from '@/context/SettingsContext';
 import { formatLongDate, formatTimeWithSeconds, getDayKey } from '@/lib/time';
 import { playAlertSound, showBrowserNotification } from '@/lib/notify';
-import type { Guest, GuestStatus, PlayArea, SocksSize, GuestType } from '@/lib/types';
+import type { Guest, GuestStatus, PlayArea, SocksSize, GuestType, CardType } from '@/lib/types';
 import { AddGuestModal } from '@/components/AddGuestModal';
 import { BulkAddModal } from '@/components/BulkAddModal';
 import { ExtendTimeModal } from '@/components/ExtendTimeModal';
@@ -47,6 +47,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   const [playAreaFilter, setPlayAreaFilter] = useState<'all' | PlayArea>('all');
   const [guestTypeFilter, setGuestTypeFilter] = useState<'all' | GuestType>('all');
   const [socksSizeFilter, setSocksSizeFilter] = useState<'all' | SocksSize>('all');
+  const [cardTypeFilter, setCardTypeFilter] = useState<'all' | CardType>('all');
 
   const [addOpen, setAddOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -149,6 +150,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     if (socksSizeFilter !== 'all') {
       list = list.filter(({ guest }) => guest.socks_size === socksSizeFilter);
     }
+    if (cardTypeFilter !== 'all') {
+      list = list.filter(({ guest }) => guest.card_type === cardTypeFilter);
+    }
 
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -157,7 +161,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
     // Always sort strictly by serial_number ascending (Smallest -> Largest)
     return list.sort((a, b) => a.guest.serial_number - b.guest.serial_number);
-  }, [liveGuests, now, activeTab, playAreaFilter, guestTypeFilter, socksSizeFilter, search]);
+  }, [liveGuests, now, activeTab, playAreaFilter, guestTypeFilter, socksSizeFilter, cardTypeFilter, search]);
 
   const cards = [
     { label: 'Active Guests', value: summary.active + summary.endingSoon, icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', tab: 'active' as TabFilter },
@@ -173,11 +177,13 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 sm:py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-emerald-500 flex items-center justify-center shrink-0 shadow-md shadow-cyan-500/20">
-                <Clock className="w-5 h-5 text-white" strokeWidth={2.5} />
-              </div>
+              <img
+                src="/logo.jpg"
+                alt="unlimited_fun_is_here logo"
+                className="w-10 h-10 rounded-xl object-cover shadow-md shrink-0"
+              />
               <div>
-                <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-none">UNLIMITED FUN</h1>
+                <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-none">unlimited_fun_is_here</h1>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">Guest Timing Management</p>
               </div>
             </div>
@@ -332,7 +338,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <select
               value={playAreaFilter}
               onChange={(e) => setPlayAreaFilter(e.target.value as 'all' | PlayArea)}
@@ -362,6 +368,16 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               <option value="small">Small</option>
               <option value="medium">Medium</option>
               <option value="large">Large</option>
+            </select>
+
+            <select
+              value={cardTypeFilter}
+              onChange={(e) => setCardTypeFilter(e.target.value as 'all' | CardType)}
+              className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 text-slate-900 font-bold text-xs outline-none"
+            >
+              <option value="all">Card: All</option>
+              <option value="basic">Basic Card</option>
+              <option value="premium">Premium Card</option>
             </select>
           </div>
         </div>

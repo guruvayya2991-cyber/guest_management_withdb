@@ -43,7 +43,7 @@ export function GuestCard({ guest, status, remainingMs, extensionCount, onExtend
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1.5 mt-1 text-xs">
+          <div className="flex items-center gap-1.5 mt-1 text-xs flex-wrap">
             <span className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${
               guest.play_area === 'soft_play' ? 'bg-pink-100 text-pink-800' : 'bg-purple-100 text-purple-800'
             }`}>
@@ -51,6 +51,11 @@ export function GuestCard({ guest, status, remainingMs, extensionCount, onExtend
             </span>
             <span className="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-md font-semibold text-[11px]">
               Socks: {guest.socks_size ? guest.socks_size.charAt(0).toUpperCase() + guest.socks_size.slice(1) : 'Medium'}
+            </span>
+            <span className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${
+              guest.card_type === 'premium' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700'
+            }`}>
+              {guest.card_type === 'premium' ? 'Premium Card' : 'Basic Card'}
             </span>
             {extensionCount > 0 && (
               <span className="text-xs text-cyan-600 font-semibold inline-block">+{extensionCount} ext</span>

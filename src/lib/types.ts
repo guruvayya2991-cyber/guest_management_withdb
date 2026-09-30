@@ -2,6 +2,7 @@ export type GuestStatus = 'active' | 'ending_soon' | 'time_over' | 'completed' |
 export type PlayArea = 'trampoline' | 'soft_play';
 export type SocksSize = 'small' | 'medium' | 'large';
 export type GuestType = 'new' | 'existing';
+export type CardType = 'basic' | 'premium';
 
 export type StaffRole = 'staff' | 'admin';
 
@@ -12,6 +13,7 @@ export interface Guest {
   play_area?: PlayArea;
   socks_size?: SocksSize;
   guest_type?: GuestType;
+  card_type?: CardType;
   in_time: string;
   expected_out_time: string;
   actual_out_time: string | null;
@@ -57,7 +59,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Omit<Settings, 'id' | 'updated_at'> = {
-  park_name: 'Unlimited Fun',
+  park_name: 'unlimited_fun_is_here',
   timezone: 'Asia/Kolkata',
   ending_soon_minutes: 10,
   notification_sound: true,
@@ -104,4 +106,9 @@ export const SOCKS_SIZE_OPTIONS: Array<{ label: string; value: SocksSize }> = [
 export const GUEST_TYPE_OPTIONS: Array<{ label: string; value: GuestType }> = [
   { label: 'New Guest', value: 'new' },
   { label: 'Existing Guest', value: 'existing' },
+];
+
+export const CARD_TYPE_OPTIONS: Array<{ label: string; value: CardType }> = [
+  { label: 'Basic Card', value: 'basic' },
+  { label: 'Premium Card', value: 'premium' },
 ];

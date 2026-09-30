@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Page } from '@/App';
 import { idbGetAllGuests } from '@/lib/idb';
 import type { Extension, Guest, GuestStatus } from '@/lib/types';
-import { getDayKey, formatDuration, formatShortDate } from '@/lib/time';
+import { getDayKey, formatShortDate } from '@/lib/time';
 import { HeaderMenu } from '@/components/HeaderMenu';
-import { ArrowLeft, Activity, AlertTriangle, CheckCircle2, Clock, TrendingUp, Users } from 'lucide-react';
+import { ArrowLeft, Activity, AlertTriangle, CheckCircle2, Clock, TrendingUp, Users, CreditCard } from 'lucide-react';
 
 interface StatsProps {
   onNavigate: (page: Page) => void;
@@ -38,6 +38,7 @@ export function Stats({ onNavigate }: StatsProps) {
   const stats = useMemo(() => {
     let active = 0, completed = 0, timeOver = 0, totalMin = 0, extCount = 0;
     let trampoline = 0, softPlay = 0, newGuest = 0, existingGuest = 0;
+    let basicCard = 0, premiumCard = 0;
     for (const r of rows) {
       const s = r.status as GuestStatus;
       if (s === 'active' || s === 'ending_soon') active++;
@@ -51,10 +52,13 @@ export function Stats({ onNavigate }: StatsProps) {
 
       if (r.guest_type === 'existing') existingGuest++;
       else newGuest++;
+
+      if (r.card_type === 'premium') premiumCard++;
+      else basicCard++;
     }
     const totalGuests = rows.length;
     const avgMin = totalGuests > 0 ? Math.round(totalMin / totalGuests) : 0;
-    return { totalGuests, active, completed, timeOver, totalMin, avgMin, extCount, trampoline, softPlay, newGuest, existingGuest };
+    return { totalGuests, active, completed, timeOver, totalMin, avgMin, extCount, trampoline, softPlay, newGuest, existingGuest, basicCard, premiumCard };
   }, [rows]);
 
   const cards = [
@@ -63,6 +67,8 @@ export function Stats({ onNavigate }: StatsProps) {
     { label: 'Soft Play', value: stats.softPlay, icon: TrendingUp, color: 'text-pink-600', bg: 'bg-pink-50' },
     { label: 'New Guests', value: stats.newGuest, icon: Users, color: 'text-cyan-600', bg: 'bg-cyan-50' },
     { label: 'Existing Guests', value: stats.existingGuest, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { label: 'Basic Cards', value: stats.basicCard, icon: CreditCard, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Premium Cards', value: stats.premiumCard, icon: CreditCard, color: 'text-amber-700', bg: 'bg-amber-50' },
     { label: 'Active', value: stats.active, icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'text-slate-500', bg: 'bg-slate-50' },
     { label: 'Time Over', value: stats.timeOver, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50' },

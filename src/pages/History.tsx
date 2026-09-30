@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Page } from '@/App';
 import { idbGetAllGuests, idbDeleteGuest } from '@/lib/idb';
-import type { Extension, Guest, GuestStatus, PlayArea, SocksSize, GuestType } from '@/lib/types';
+import type { Extension, Guest, GuestStatus, PlayArea, SocksSize, GuestType, CardType } from '@/lib/types';
 import { getDayKey, formatDuration, formatTime, formatShortDate, formatSerial, toLocalInputValue } from '@/lib/time';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Modal } from '@/components/Modal';
@@ -25,6 +25,7 @@ export function History({ onNavigate }: HistoryProps) {
   const [playAreaFilter, setPlayAreaFilter] = useState<'all' | PlayArea>('all');
   const [guestTypeFilter, setGuestTypeFilter] = useState<'all' | GuestType>('all');
   const [socksSizeFilter, setSocksSizeFilter] = useState<'all' | SocksSize>('all');
+  const [cardTypeFilter, setCardTypeFilter] = useState<'all' | CardType>('all');
   const [allRows, setAllRows] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,12 +73,15 @@ export function History({ onNavigate }: HistoryProps) {
     if (socksSizeFilter !== 'all') {
       list = list.filter((r) => r.socks_size === socksSizeFilter);
     }
+    if (cardTypeFilter !== 'all') {
+      list = list.filter((r) => r.card_type === cardTypeFilter);
+    }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter((r) => r.guest_name.toLowerCase().includes(q));
     }
     return [...list].sort((a, b) => a.serial_number - b.serial_number);
-  }, [rows, statusFilter, playAreaFilter, guestTypeFilter, socksSizeFilter, search]);
+  }, [rows, statusFilter, playAreaFilter, guestTypeFilter, socksSizeFilter, cardTypeFilter, search]);
 
   const stats = useMemo(() => {
     let totalMin = 0;
@@ -106,7 +110,7 @@ export function History({ onNavigate }: HistoryProps) {
   }
 
   function exportCSV() {
-    const headers = ['S.No', 'Guest Name', 'Guest Type', 'Play Area', 'Socks Size', 'In Time', 'Expected Out', 'Actual Out', 'Duration', 'Extensions', 'Status', 'Remarks'];
+    const headers = ['S.No', 'Guest Name', 'Guest Type', 'Play Area', 'Socks Size', 'Card Type', 'In Time', 'Expected Out', 'Actual Out', 'Duration', 'Extensions', 'Status', 'Remarks'];
     const lines = filtered.map((r) => {
       const exts = (r.extensions ?? []).map((e) => `+${e.extension_minutes}m`).join('; ');
       const row = [
@@ -115,6 +119,7 @@ export function History({ onNavigate }: HistoryProps) {
         r.guest_type === 'existing' ? 'Existing Guest' : 'New Guest',
         r.play_area === 'soft_play' ? 'Soft Play' : 'Trampoline Park',
         r.socks_size || 'medium',
+        r.card_type === 'premium' ? 'Premium Card' : 'Basic Card',
         formatTime(r.in_time),
         formatTime(r.expected_out_time),
         r.actual_out_time ? formatTime(r.actual_out_time) : '—',
@@ -130,7 +135,7 @@ export function History({ onNavigate }: HistoryProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `unlimited-fun-history-${viewAllDates ? 'all-dates' : date}.csv`;
+    a.download = `unlimited_fun_is_here-history-${viewAllDates ? 'all-dates' : date}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -209,7 +214,7 @@ export function History({ onNavigate }: HistoryProps) {
           </div>
 
           {/* Additional Filter Selects */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as GuestStatus | 'all')}
@@ -252,6 +257,16 @@ export function History({ onNavigate }: HistoryProps) {
               <option value="small">Small</option>
               <option value="medium">Medium</option>
               <option value="large">Large</option>
+            </select>
+
+            <select
+              value={cardTypeFilter}
+              onChange={(e) => setCardTypeFilter(e.target.value as 'all' | CardType)}
+              className="px-3 py-2 rounded-xl border border-slate-200 bg-white focus:border-cyan-500 outline-none text-slate-900 font-bold text-xs"
+            >
+              <option value="all">Card Type: All</option>
+              <option value="basic">Basic Card</option>
+              <option value="premium">Premium Card</option>
             </select>
           </div>
         </div>
@@ -394,6 +409,10 @@ export function History({ onNavigate }: HistoryProps) {
               <div className="p-3 rounded-xl bg-slate-50">
                 <p className="text-xs text-slate-400 font-semibold uppercase">Guest Type</p>
                 <p className="text-slate-800 font-bold">{selectedGuest.guest_type === 'existing' ? 'Existing Guest' : 'New Guest'}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50">
+                <p className="text-xs text-slate-400 font-semibold uppercase">Card Type</p>
+                <p className="text-slate-800 font-bold">{selectedGuest.card_type === 'premium' ? 'Premium Card' : 'Basic Card'}</p>
               </div>
               <div className="p-3 rounded-xl bg-slate-50">
                 <p className="text-xs text-slate-400 font-semibold uppercase">In Time</p>
